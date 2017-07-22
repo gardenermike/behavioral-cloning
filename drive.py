@@ -45,13 +45,14 @@ class SimplePIController:
 
 
 controller = SimplePIController(0.1, 0.002)
-set_speed = 9
+set_speed = 5
 controller.set_desired(set_speed)
 
 def normalize(x):
     return x / 255.0 - 0.5
 
 aggregated_steering_angle = 0.
+simulator_locked_up = False
 
 count_from_start = 0
 
@@ -59,6 +60,7 @@ count_from_start = 0
 @sio.on('telemetry')
 def telemetry(sid, data):
     global aggregated_steering_angle
+    global simulator_locked_up
     if data:
         # The current steering angle of the car
         steering_angle = data["steering_angle"]
@@ -81,7 +83,7 @@ def telemetry(sid, data):
         aggregated_steering_angle = steering_angle
 
         global count_from_start
-        if False: #count_from_start < 70:
+        if False: # count_from_start < 200:
             print(count_from_start)
             steering_angle = 0.01
             count_from_start += 1
@@ -89,8 +91,11 @@ def telemetry(sid, data):
         throttle = controller.update(float(speed))
 
         #deal with a frozen simulator by going in reverse
-        if float(speed) < 0.1:
+        if not simulator_locked_up and float(speed) < 0.55:
             throttle = -0.25
+            simulator_locked_up = True
+        else:
+            simulator_locked_up = False
 
         print(steering_angle, throttle)
         send_control(steering_angle, throttle)
