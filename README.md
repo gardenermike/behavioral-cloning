@@ -7,47 +7,43 @@
 This is a working Keras implementation of a model that learns to steer
 based on the images exported from a simulator.
 
+**Detailed description**
+[Udacity](https://www.udacity.com/) provides a simulator for their Self-Driving Car nanodegree program.
+The simulator uses the Unity engine to provide physics and rendering for a car to drive on multiple tracks. It also supports two other features: a series of screenshots from the perspective of the car, including a center, left, and right camera, can be recorded and saved with a .csv manifest file mapping the images to steering angles and throttle. Secondly, the simulator can call out to a service using websockets, and will pass along center camera screenshots and current speed information, and will listen for steering and throttle data to allow for remote driving.
 
-* Use the simulator to collect data of good driving behavior
-* Build, a convolution neural network in Keras that predicts steering angles from images
-* Train and validate the model with a training and validation set
-* Test that the model successfully drives around track one without leaving the road
-* Summarize the results with a written report
+This project is an [implementation](https://github.com/gardenermike/behavioral-cloning/blob/master/model.py) using [Keras](https://keras.io/) and [TensorFlow](https://www.tensorflow.org/) to autonomously drive the simulator using the raw image data.
+
+Note that this implementation can be seen as a regression problem of images to steering angle. I experimented some with a recurrent layer in the network, but there was a strong tendency to overfit and just drive straight, so that is a project for another day.
 
 
 [//]: # (Image References)
 
-[image1]: ./examples/placeholder.png "Model Visualization"
-[image2]: ./examples/placeholder.png "Grayscaling"
-[image3]: ./examples/placeholder_small.png "Recovery Image"
-[image4]: ./examples/placeholder_small.png "Recovery Image"
-[image5]: ./examples/placeholder_small.png "Recovery Image"
-[image6]: ./examples/placeholder_small.png "Normal Image"
-[image7]: ./examples/placeholder_small.png "Flipped Image"
-
-## Rubric Points
-### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
+[Car screenshot]: ./images/center_2017_07_19_14_59_55_829.jpg "Example data"
+[Narrow image]: ./images/output.jpg "Narrow slice of image"
+[Augmented image 1]: ./images/output_0.jpg "Augmented image 1"
+[Augmented image 2]: ./images/output_1.jpg "Augmented image 2"
+[Augmented image 3]: ./images/output_2.jpg "Augmented image 3"
+[Augmented image 4]: ./images/output_3.jpg "Augmented image 4"
+[Augmented image 5]: ./images/output_4.jpg "Augmented image 5"
+[Augmented image 6]: ./images/output_5.jpg "Augmented image 6"
+[Augmented image 7]: ./images/output_6.jpg "Augmented image 7"
+[Augmented image 8]: ./images/output_7.jpg "Augmented image 8"
+[Augmented image 9]: ./images/output_8.jpg "Augmented image 9"
+[Augmented image 10]: ./images/output_9.jpg "Augmented image 10"
 
 ---
-### Files Submitted & Code Quality
+### Files
 
-#### 1. Submission includes all required files and can be used to run the simulator in autonomous mode
+The following files should be considered relevant
+* model.py contains the model used to train on the first, simpler track
+* model-track2.py contains the deeper model used for the second track
+* drive.py provides support to drive the car in autonomous mode, including the websocket server, and generation of steering angles using the trained model. This file is mostly straight from Udacity's sample code, but I added a couple of features:
+  - The simulator tends to lock up and quit accepting throttle commands. A quick "tap on the brake" fixes the problem, so my drive.py will push a small negative throttle value if the speed reported from the simulator drops below 0.5 mph.
+  - I added support to run multiple models in parallel to get an ensemble value. I did not end up using the feature much, but it was interesting to experiment with, and could potentially be used to get smoother driving.
+* model.h5 contains the trained model and weights for the first track.
+* model-track2.h5 contains the trained model and weights for the second track
+* architecture.pdf contains a detailed (zoomable!) description of the model I used on the second track.
 
-My project includes the following files:
-* model.py containing the script to create and train the model
-* drive.py for driving the car in autonomous mode
-* model.h5 containing a trained convolution neural network 
-* writeup_report.md or writeup_report.pdf summarizing the results
-
-#### 2. Submission includes functional code
-Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the track by executing 
-```sh
-python drive.py model.h5
-```
-
-#### 3. Submission code is usable and readable
-
-The model.py file contains the code for training and saving the convolution neural network. The file shows the pipeline I used for training and validating the model, and it contains comments to explain how the code works.
 
 ### Model Architecture and Training Strategy
 
