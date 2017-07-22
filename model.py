@@ -15,23 +15,25 @@ from PIL import Image
 import glob
 import random
 
-#not used
+# load an image from the filesystem
 def get_image(image_path):
     image = Image.open(image_path)
 
     return image.convert('RGB')
 
-features = []
-targets = []
 
+# the base directory of training data
 data_base_directory = '../car_simulator_training'
 
+# simplifies mapping the csv filename to the filesystem path
 def local_image_path(image_path):
     filename = image_path.split('/')[-1]
 
     return data_base_directory + '/IMG/' + filename
 
+# list to hold the text rows from the csv manifest file
 sampled_rows = []
+# grab all of the rows from the csv file to be shuffled in the generator
 with open(data_base_directory + '/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
 
@@ -39,14 +41,21 @@ with open(data_base_directory + '/driving_log.csv') as csvfile:
         center, left, right, steering_angle, throttle, _, speed = line
         sampled_rows.append(line)
 
+# randomize the data
 random.shuffle(sampled_rows)
+
+# split into training, valid, test sets
 valid_start_index = int(len(sampled_rows) * 0.9)
 train_rows = sampled_rows[0:valid_start_index]
 valid_rows = sampled_rows[valid_start_index:-1]
 test_rows = valid_rows[len(valid_rows) // 2:-1]
 valid_rows = valid_rows[0:len(valid_rows) // 2]
 
+# used by the generator to accumulate batches
+features = []
+targets = []
 
+# generator for training data
 def get_images(samples, batch_size=36):
     features.clear()
     targets.clear()
@@ -59,6 +68,7 @@ def get_images(samples, batch_size=36):
 
             # fix overrepresentation of small steering angles
             # by strongly favoring images with angles, with a small leak in the filter
+            # This is tunable! I experimented with a range of values before settling on these.
             if np.random.random() > (np.power(np.abs(steering_angle), 1.4) + 0.003):
                 continue
     
