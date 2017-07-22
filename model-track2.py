@@ -18,19 +18,25 @@ import glob
 import random
 import cv2
 
+# I experimented with using a pre-trained model.
+# Performance seemed promising, but the model was huge and slow,
+# and the simulator tended to lock up when the values were returned too slowly.
 from keras.applications.inception_v3 import InceptionV3
+
+# Great library, but it imposed more constraints on my data than I wanted, so I didn't use it.
 from keras.preprocessing import image
 
-
-#not used
+# load the image from the filesystem
 def get_image(image_path):
     image = Image.open(image_path)
 
     return image.convert('RGB')
 
+# accumulator lists for the generator
 features = []
 targets = []
 
+# the base directory of training data
 data_base_directory = '../track_2_2'
 #data_base_directory = '../car_training_2'
 
@@ -39,6 +45,7 @@ def local_image_path(image_path):
 
     return data_base_directory + '/IMG/' + filename
 
+# load the csv data into a list to be shuffled
 sampled_rows = []
 with open(data_base_directory + '/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
@@ -47,13 +54,18 @@ with open(data_base_directory + '/driving_log.csv') as csvfile:
         center, left, right, steering_angle, throttle, _, speed = line
         sampled_rows.append(line)
 
+# randomize the data
 random.shuffle(sampled_rows)
+
+# split into training/validation/test data
 valid_start_index = int(len(sampled_rows) * 0.9)
 train_rows = sampled_rows[0:valid_start_index]
 valid_rows = sampled_rows[valid_start_index:-1]
 test_rows = valid_rows[len(valid_rows) // 2:-1]
 valid_rows = valid_rows[0:len(valid_rows) // 2]
 
+# I had great success with this when using a custom channel,
+# but it was too challenging for the model when using rgb.
 def add_random_shadow(image):
     x_size = 320
     y_size = 160
@@ -80,6 +92,9 @@ def add_random_shadow(image):
 
     return cv2.cvtColor(image_hls, cv2.COLOR_HLS2RGB)
 
+# this is the magic for data augmentation. This function 
+# adds shear to the image with the bottom held static, effectively adding curve to the road.
+# This augmentation made all the difference in training.
 def add_random_shear(image):
     x_size = 320
     y_size = 160
@@ -97,6 +112,7 @@ def add_random_shear(image):
 
     return (rotation_angle / 2, dst)
 
+# generator for training data
 def get_images(samples, batch_size=36, augment=True):
     features.clear()
     targets.clear()
@@ -109,6 +125,7 @@ def get_images(samples, batch_size=36, augment=True):
 
             # fix overrepresentation of small steering angles
             # by strongly favoring images with angles, with a small leak in the filter
+            # This code was not needed with the shear augmentation above.
             #if augment and np.random.random() > (np.power(np.abs(steering_angle), 0.2) + 0.005):
             #    continue
 
@@ -156,19 +173,10 @@ def get_images(samples, batch_size=36, augment=True):
 
     return None
 
-#get_images()
-#features = np.array(features)
-#targets = np.array(targets)
-#print("{} images, {} targets".format(len(features), len(targets)))
-
-#shape = features[0].shape
 shape = (160, 320, 3)
 
-#file_count = len(glob.glob(data_base_directory + "/IMG/*.jpg"))
 batch_size = 36
-#images_per_row = 6
 batches_per_epoch = 100 #use an arbitrary value now that using a generator #len(train_rows) * images_per_row // batch_size
-#validation_batches_per_epoch = len(valid_rows) * images_per_row // batch_size
 epochs = 50
 
 def preprocess(x):
@@ -177,17 +185,14 @@ def preprocess(x):
 
     normalized = x / 255.
 
+    # this line is needed for using an ImageNet pretrainined model
     #return tf.image.resize_images(normalized, (224, 224)) - 0.5
-
-    #normalized = tf.image.resize_images(normalized, (224, 224))
-
-    #added = tf.reduce_sum(normalized, axis=3, keep_dims=True)
-    #return added / tf.reduce_max(added)
 
     hsv = tf.image.rgb_to_hsv(normalized)
 
     return tf.concat([normalized, hsv], 3) - 0.5
 
+    # everything after this point represents experimentation with color
     h_channel = tf.slice(hsv, [0, 0, 0, 0], [-1, -1, -1, 1])
     s_channel = tf.slice(hsv, [0, 0, 0, 1], [-1, -1, -1, 1])
     v_channel = tf.slice(hsv, [0, 0, 0, 2], [-1, -1, -1, 1])
@@ -208,6 +213,7 @@ def preprocess(x):
     v_channel_minus_green = tf.multiply(v_channel_with_threshold, green_mask)
 
     max_value = tf.reduce_max(v_channel_minus_green)
+    # this channel works very well with no other data, but is not very general
     v_channel_minus_green = v_channel_minus_green / max_value
 
     return tf.concat([v_channel_minus_green, s_channel, h_channel, r_channel, g_channel, b_channel, v_channel, v_channel_with_threshold], 3) - 0.5
@@ -248,15 +254,19 @@ y_crop_top_pixels = 100
 y_crop_bottom_pixels = 30
 x_crop_pixels = 90
 cropped = Cropping2D(cropping=((y_crop_top_pixels, y_crop_bottom_pixels), (x_crop_pixels, x_crop_pixels)))(preprocessed)
+
+# this interesting function stretches the cropped image vertically.
+# it actually helps the model quite a bit, but is not needed if
+# max pooling is not applied in the vertical dimension
 def stretch_y(x):
     import tensorflow as tf
     return tf.image.resize_images(x, (140, 224))
 #cropped = Lambda(stretch_y)(cropped)
 
-#preprocessed = Lambda(preprocess)(inputs)
-
+# can be used for ImageNet model
 #resized = ZeroPadding2D(padding=((224 - 160 + y_crop_top_pixels + y_crop_bottom_pixels) // 2, 0))(cropped)
 
+# code to use a pre-trained ImageNet model. Works, but slow.
 """
 base_model = InceptionV3(input_tensor=preprocessed, weights='imagenet', include_top=False)
 
@@ -272,6 +282,7 @@ x = Dense(1)(x)
 """
 
 # apply a soft attention layer
+# this was much, much too slow, but was an interesting experiment
 #flattened_cropped = Flatten()(cropped)
 #attention_probabilities = Dense((160 - y_crop_top_pixels) * 320, activation='softmax', name='attention_probs')(flattened_cropped)
 #attention_multiplied = Multiply()([flattened_cropped, attention_probabilities])
@@ -280,26 +291,18 @@ x = Dense(1)(x)
 
 
 conv1 = Conv2D(8, 7, padding='same', activation='elu')(cropped)
-#conv1 = SeparableConv2D(8, 7, padding='same', activation='elu')(cropped)
 conv1 = MaxPooling2D(pool_size=(2, 2), padding='same')(conv1)
 
-#conv2 = Conv2D(16, 7, padding='same', activation='elu')(conv1)
 conv2 = SeparableConv2D(16, 7, padding='same', activation='elu')(conv1)
 conv2 = MaxPooling2D(pool_size=(1, 2), padding='same')(conv2)
 
-#conv3 = Conv2D(32, 5, padding='same', activation='elu')(conv2)
 conv3 = SeparableConv2D(32, 5, padding='same', activation='elu')(conv2)
-#conv3 = MaxPooling2D(pool_size=(1, 2),  padding='same')(conv3)
 
-#conv4 = Conv2D(64, 5, padding='same')(conv3)
 conv4 = SeparableConv2D(64, 5, padding='same')(conv3)
-#conv4 = BatchNormalization()(conv4)
 conv4 = Activation('elu')(conv4)
 conv4 = Dropout(0.3)(conv4)
 
-#conv5 = Conv2D(64, 3, padding='same')(conv4)
 conv5 = SeparableConv2D(64, 3, padding='same')(conv4)
-#conv5 = BatchNormalization()(conv5)
 conv5 = Activation('elu')(conv5)
 conv5 = MaxPooling2D(pool_size=(1, 2), padding='same')(conv5)
 conv5 = Dropout(0.3)(conv5)
@@ -309,7 +312,6 @@ for i in range(4):
     conv6 = Conv2D(64, 3, padding='same', activation='elu')(conv6)
     conv6 = Dropout(0.2)(conv6)
 
-#conv6 = Conv2D(64, 1, padding='same')(conv5)
 conv7 = SeparableConv2D(64, 1, padding='same')(conv6)
 conv7 = BatchNormalization()(conv7)
 conv7 = Activation('elu')(conv7)
@@ -322,12 +324,10 @@ conv8 = Dropout(0.2)(conv8)
 
 flattened = Flatten()(conv8)
 
-# this may need to be regularized more or removed again
 dense0 = Dense(192, activation='elu')(flattened)
 dense0 = Dropout(0.2)(dense0)
 
 dense1 = Dense(64)(dense0)
-#dense1 = BatchNormalization()(dense1)
 dense1 = Activation('elu')(dense1)
 dense1 = Dropout(0.2)(dense1)
 
@@ -339,15 +339,17 @@ dense3 = Dropout(0.2)(dense3)
 
 dense4 = Dense(8, activation='elu')(dense3)
 
+# a tanh activation worked, but obscured the improvement of the loss
+# without any real benefit
 #output = Dense(1, activation='tanh')(dense2)
 output = Dense(1)(dense4)
 
-#model = Model(inputs=inputs, outputs=output)
 model = Model(inputs=inputs, outputs=output)
 
-# TODO: train your model here
 optimizer = Adam(lr=0.0001, decay=0.01)
 model.compile(optimizer, 'mean_squared_error', ['accuracy'])
+
+# for a small dataset without a generator, this works
 #model.fit(features, targets, validation_split=0.2, epochs=epochs, shuffle=True, batch_size=batch_size)
 
 checkpointer = ModelCheckpoint(filepath='model-live.h5', verbose=1)
