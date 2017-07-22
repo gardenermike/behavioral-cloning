@@ -1,0 +1,368 @@
+digraph architecture {
+  size="8.5,10!";
+  node [shape=box];
+
+  input ->
+    "preprocess lambda" ->
+    crop ->
+    conv_1 ->
+    max_pool_1 ->
+    conv_2 ->
+    max_pool_2 ->
+    conv_3 ->
+    conv_4 ->
+    conv_5 ->
+    max_pool_3 ->
+    conv_6 ->
+    conv_7 ->
+    flatten ->
+    dense0 ->
+    dense1 ->
+    dense2 ->
+    dense3 ->
+    dense4 ->
+    output;
+
+  conv_6 -> conv_6 [label=" Repeat 4 times"];
+  conv_7 -> conv_7 [label=" Repeat once"];
+
+  input [
+    shape=ellipse
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Input</font></td>
+        </tr>
+        <tr>
+          <td>Shape</td>
+          <td>320x160x3</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  "preprocess lambda" [
+    shape=egg
+    label="Preprocessing lambda\nNormalizes\nConcatenates HSV color channels to RGB"
+  ];
+
+  crop [
+    shape=egg
+    label="Crop\nCrops to 45x140"
+  ];
+
+  conv_1 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Convolution</font></td>
+        </tr>
+        <tr>
+          <td>Filters</td>
+          <td>8</td>
+        </tr>
+        <tr>
+          <td>Kernel size</td>
+          <td>7x7</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  max_pool_1 [
+    shape=egg
+    label="Max Pool\n2x2"
+  ];
+
+  conv_2 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Separable Convolution</font></td>
+        </tr>
+        <tr>
+          <td>Filters</td>
+          <td>16</td>
+        </tr>
+        <tr>
+          <td>Kernel size</td>
+          <td>7x7</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  max_pool_2 [
+    shape=egg
+    label="Max Pool\n2x1"
+  ];
+
+  conv_3 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Separable Convolution</font></td>
+        </tr>
+        <tr>
+          <td>Filters</td>
+          <td>32</td>
+        </tr>
+        <tr>
+          <td>Kernel size</td>
+          <td>5x5</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  conv_4 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Separable Convolution</font></td>
+        </tr>
+        <tr>
+          <td>Filters</td>
+          <td>64</td>
+        </tr>
+        <tr>
+          <td>Kernel size</td>
+          <td>5x5</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+        <tr>
+          <td>Dropout</td>
+          <td>0.3</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  conv_5 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Separable Convolution</font></td>
+        </tr>
+        <tr>
+          <td>Filters</td>
+          <td>64</td>
+        </tr>
+        <tr>
+          <td>Kernel size</td>
+          <td>3x3</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  max_pool_3 [
+    shape=egg
+    label="Max Pool\n2x1\nDropout 0.3"
+  ];
+
+  conv_6 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Convolution</font></td>
+        </tr>
+        <tr>
+          <td>Filters</td>
+          <td>64</td>
+        </tr>
+        <tr>
+          <td>Kernel size</td>
+          <td>3x3</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+        <tr>
+          <td>Dropout</td>
+          <td>0.2</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  conv_7 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Separable Convolution</font></td>
+        </tr>
+        <tr>
+          <td>Filters</td>
+          <td>64</td>
+        </tr>
+        <tr>
+          <td>Kernel size</td>
+          <td>1x1</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+        <tr>
+          <td>Dropout</td>
+          <td>0.2</td>
+        </tr>
+        <tr>
+          <td colspan="2">Batch normalization</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  flatten [
+    shape=egg
+    label="Flatten"
+  ];
+
+  dense0 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Fully connected</font></td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td>128</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+        <tr>
+          <td>Dropout</td>
+          <td>0.2</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  dense1 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Fully connected</font></td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td>64</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+        <tr>
+          <td>Dropout</td>
+          <td>0.2</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  dense2 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Fully connected</font></td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td>32</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+        <tr>
+          <td>Dropout</td>
+          <td>0.2</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  dense3 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Fully connected</font></td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td>16</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+        <tr>
+          <td>Dropout</td>
+          <td>0.2</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  dense4 [
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Fully connected</font></td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td>8</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>elu</td>
+        </tr>
+      </table>
+    >
+  ];
+
+  output [
+    shape=ellipse
+    label=<
+      <table BORDER="0">
+        <tr>
+          <td colspan="2"><font face="Times-Bold">Output (Fully connected)</font></td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>Activation</td>
+          <td>none</td>
+        </tr>
+      </table>
+    >
+  ];
+
+}

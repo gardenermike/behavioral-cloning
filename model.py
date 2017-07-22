@@ -4,7 +4,7 @@ from keras.layers import Dense, Activation, Dropout, Flatten, Reshape, Input, La
 from keras.layers.recurrent import LSTM
 from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import MaxPooling2D
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, TensorBoard
 from keras.optimizers import Adam
 from keras import backend as K
 import numpy as np
@@ -219,7 +219,8 @@ model.compile(optimizer, 'mean_squared_error', ['accuracy'])
 # saving after each epoch allowed me to test the model regularly during training
 # to verify improvement and stop early.
 checkpointer = ModelCheckpoint(filepath='model-live.h5', verbose=1)
-model.fit_generator(get_images(train_rows, batch_size), steps_per_epoch=batches_per_epoch, epochs=epochs, validation_data=get_images(valid_rows, batch_size), validation_steps=5, callbacks=[checkpointer])
+tensorboard = TensorBoard()
+model.fit_generator(get_images(train_rows, batch_size), steps_per_epoch=batches_per_epoch, epochs=epochs, validation_data=get_images(valid_rows, batch_size), validation_steps=5, callbacks=[checkpointer, tensorboard])
 
 # evaluate on test set
 test_x = []
