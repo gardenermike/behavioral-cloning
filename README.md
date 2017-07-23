@@ -39,9 +39,9 @@ Note that this implementation can be seen as a regression problem of images to s
 [Augmented image 10]: ./images/output_9.jpg "Augmented image 10"
 [gif_as_model]: ./images/track_2_as_model.gif "Track 2 as model"
 [screenshot]: ./images/screenshot.png "Screenshot"
-![left_image]: ./images/left_2017_06_23_12_57_27_008.jpg
-![center_image]: ./images/center_2017_06_23_12_57_27_008.jpg
-![right_image]: ./images/right_2017_06_23_12_57_27_008.jpg
+![left_image]: ./images/left_2017_06_23_12_57_27_008.jpg "Left image"
+![center_image]: ./images/center_2017_06_23_12_57_27_008.jpg "Center image"
+![right_image]: ./images/right_2017_06_23_12_57_27_008.jpg "Right image"
 
 ---
 ### Files
