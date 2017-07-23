@@ -3,6 +3,7 @@
 ---
 
 **Behavioral Cloning Project**
+
 ![screenshot][screenshot]
 
 This is a working Keras implementation of a model that learns to steer
