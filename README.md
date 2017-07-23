@@ -4,6 +4,8 @@
 
 **Behavioral Cloning Project**
 
+![screenshot][screenshot]
+
 This is a working Keras implementation of a model that learns to steer
 based on the images exported from a simulator.
 
@@ -11,6 +13,10 @@ based on the images exported from a simulator.
 
 [Udacity](https://www.udacity.com/) provides a simulator for their Self-Driving Car nanodegree program.
 The simulator uses the Unity engine to provide physics and rendering for a car to drive on multiple tracks. It also supports two other features: a series of screenshots from the perspective of the car, including a center, left, and right camera, can be recorded and saved with a .csv manifest file mapping the images to steering angles and throttle. Secondly, the simulator can call out to a service using websockets, and will pass along center camera screenshots and current speed information, and will listen for steering and throttle data to allow for remote driving.
+
+An example image is below:
+
+![Car screenshot][Car screenshot]
 
 This project is an [implementation](https://github.com/gardenermike/behavioral-cloning/blob/master/model.py) using [Keras](https://keras.io/) and [TensorFlow](https://www.tensorflow.org/) to autonomously drive the simulator using the raw image data.
 
@@ -32,6 +38,7 @@ Note that this implementation can be seen as a regression problem of images to s
 [Augmented image 9]: ./images/output_8.jpg "Augmented image 9"
 [Augmented image 10]: ./images/output_9.jpg "Augmented image 10"
 [gif_as_model]: ./images/track_2_as_model.gif "Track 2 as model"
+[screenshot]: ./images/screenshot.png "Screenshot"
 
 ---
 ### Files
@@ -88,6 +95,7 @@ After struggling to get good performance on the second track, I added some data 
 ![Augmented image 9][Augmented image 9]
 ![Augmented image 10][Augmented image 10]
 
+
 Adding the random shear was really key to getting around the very challenging second track.
 
 In addition to the shadow and shear augmentation, I also submitted every image flipped (with a negated steering angle) to avoid a turning bias. I also added images from the left and right camera angles on 25% of the rows to capture scenes out-of-center without having to drive unsafely. Those side images allowed the model to recover after accidentally drifting off center. The videos show a couple of cases where the car neared the edge of the road and then swerved back to center.
@@ -113,8 +121,6 @@ Key observations are:
 ### Video!
 
 .mp4 files from the perspective of the vehicle are included for both tracks in this repository. As a shortcut, though, you can hop on over to YouTube with the two links below.
-
-http://img.youtube.com/vi/<insert-youtube-video-id-here>/hqdefault.jpg
 
 [![Track 1](http://img.youtube.com/vi/7yL9rPkTVy8/hqdefault.jpg)](https://youtu.be/7yL9rPkTVy8)
 
