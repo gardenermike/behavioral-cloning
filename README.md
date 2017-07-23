@@ -105,9 +105,9 @@ In addition to the shadow and shear augmentation, I also trained on every image 
 
 Here are some camera images from the left, center, and right cameras:
 
-![left_image][Left image]
-![center_image][Center image]
-![right_image][Right image]
+![Left image][left_image]
+![Center image][center_image]
+![Right image][right_image]
 
 
 #### 3. Model parameter tuning
