@@ -191,7 +191,8 @@ def preprocess(x):
 
     hsv = tf.image.rgb_to_hsv(normalized)
 
-    return tf.concat([normalized, hsv], 3) - 0.5
+    # use this for track 2
+    #return tf.concat([normalized, hsv], 3) - 0.5
 
     # everything after this point represents experimentation with color
     h_channel = tf.slice(hsv, [0, 0, 0, 0], [-1, -1, -1, 1])
