@@ -23,7 +23,7 @@ digraph architecture {
     dense4 ->
     output;
 
-  conv_6 -> conv_6 [label=" Repeat 4 times"];
+  /*conv_6 -> conv_6 [label=" Repeat 4 times"];*/
   conv_7 -> conv_7 [label=" Repeat once"];
 
   input [
