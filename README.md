@@ -46,7 +46,7 @@ This implementation can be seen as a regression problem of images to steering an
 ---
 ### Files
 
-The following files should be considered relevant
+The following files should be considered relevant:
 * model.py contains the model used successfully on both tracks
 * model-simple.py contains a smaller model used successfully on the basic track
 * drive.py provides support to drive the car in autonomous mode, including the websocket server and generation of steering angles using the trained model. This file is mostly straight from Udacity's sample code, but I added a couple of features:
