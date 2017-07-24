@@ -39,6 +39,9 @@ Note that this implementation can be seen as a regression problem of images to s
 [Augmented image 10]: ./images/output_9.jpg "Augmented image 10"
 [gif_as_model]: ./images/track_2_as_model.gif "Track 2 as model"
 [screenshot]: ./images/screenshot.png "Screenshot"
+[left_image]: ./images/left_2017_06_23_12_57_27_008.jpg "Left image"
+[center_image]: ./images/center_2017_06_23_12_57_27_008.jpg "Center image"
+[right_image]: ./images/right_2017_06_23_12_57_27_008.jpg "Right image"
 
 ---
 ### Files
@@ -60,19 +63,19 @@ The following files should be considered relevant
 
 I used a deep convolutional network. For a zoomable diagram of the deeper architecture I used on the second track, [check out the pdf](https://raw.githubusercontent.com/gardenermike/behavioral-cloning/master/architecture.pdf)
 
-I spent a lot of time tweaking the model for better performance. With the idea that model depth represents abstraction, I opted for a deeper rather than wider model.
+The model could be considered loosely modeled on the LeNEt architecture, with additional convolutional layers added. With the idea that model depth represents abstraction, I opted for a deeper rather than wider model. I tinkered quite a bit with different options. I changed out activation layers (I ended up using elu). I changed filter count in the convolutions, adjusting to get a quick-performing model that still learned successfully. I added more convolutional layers and more fully connected layers. The size of the first fully-connected layer turned out to be the biggest factor in the model size, as the number of filters in the final convolution is quite high. I also experimented with max pooling. Max pooling lowered performance but dramatically sped up training. The final architecture reflects compromises there. In addition, two of my max pooling layers pool only in the horizontal dimension, as the source images contain more vertical than horizontal information.
 
-The first main thing to note is the severe cropping: the vast majority of the image has been removed. In fact, I found that I could only successfully train the model with such severe cropping. In particular, any part of the image suggesting the _future_ was problematic. Since the autonomous driving process with the simulator works on a per-image basis with no state, each image needs to stand alone. I found that removing most of the upcoming view of the road ahead allowed the model to "live in the moment". The driving was a little choppier, but odd artifacts like a rock in front of a lane line would not confuse the model.
+One thing to note in the model note is the severe cropping: the vast majority of the image has been removed. In fact, I found that I could only successfully train the model with such severe cropping. In particular, any part of the image suggesting the _future_ was problematic. Since the autonomous driving process with the simulator works on a per-image basis with no state, each image needs to stand alone. I found that removing most of the upcoming view of the road ahead allowed the model to "live in the moment". The driving was a little choppier, but odd artifacts like a rock in front of a lane line would not confuse the model.
 
-I experimented with color quite a bit. In the lambda preprocessing layer, I am currently using RGB and HSV channels. On the first track, I found the the S channel alone was sufficient (and superior) to drive with. I struggled with many iterations of the model to deal with the entrance to the dirt road on the first track. The S channel captured the boundary of the paved road best, allowing the model to see the corner properly.
+I experimented with color quite a bit. In the lambda preprocessing layer, I am currently converting the RGB passed in to the model, using Tensorflow, to HSV, then concatenating the HSV channels to the RGB channels, meaning that the model has six channels to work with instead of three. On the first track, I found the the S channel alone was sufficient (and superior) to drive with. I struggled with many iterations of the model to deal with the entrance to the dirt road on the first track. The S channel captured the boundary of the paved road best, allowing the model to see the corner properly.
 I performed grander experiments on the second track. I actually was able to drive most of the track with just one [carefully crafted channel](https://github.com/gardenermike/behavioral-cloning/blob/master/model-track2.py#L217).
 I made a gif from the perspective of the model using my custom channel:
 
 ![Track 2 from the perspective of the car, with custom channel][gif_as_model]
 
-In the end, I switched back to a more standard use of colors in interest of trying to learn something more generalizable.
+In the end, I switched back to a more standard use of colors in interest of trying to learn something more generalizable that would work on both tracks. I found that using all of the R, G, B, H, S, and V channels led to quicker convergence.
 
-I also tried separable convolutions in addition to standard convolutions. I found that they did improve my model performance if used in layers after the first layer, since my first layer was already carefully crafted.
+I also tried [separable convolutions](https://arxiv.org/abs/1610.02357) in addition to standard convolutions. I found that they did improve my model performance if used in layers after the first layer, since my first layer was already carefully crafted.
 
 I also used batch normalization in a couple of layers. Batch normalization caused a much smoother decline in the loss. Interestingly, it caused the validation loss to drop much more slowly than the training loss, but the validation loss eventually dropped to lower than the training loss. Such behavior is backwards from what I'd usually expect in training, where the model eventually overfits. My generous use of dropout and image augmentation seemed to prevent overfitting well, and the batch normalization just helped clarify when my model actually had generalized.
 
@@ -98,7 +101,14 @@ After struggling to get good performance on the second track, I added some data 
 
 Adding the random shear was really key to getting around the very challenging second track.
 
-In addition to the shadow and shear augmentation, I also submitted every image flipped (with a negated steering angle) to avoid a turning bias. I also added images from the left and right camera angles on 25% of the rows to capture scenes out-of-center without having to drive unsafely. Those side images allowed the model to recover after accidentally drifting off center. The videos show a couple of cases where the car neared the edge of the road and then swerved back to center.
+In addition to the shadow and shear augmentation, I also trained on every image flipped (with a negated steering angle) as well as unflipped to avoid a turning bias. I also added images from the left and right cameras (with a 0.25 radian angle added) on 20% of the rows to capture scenes out-of-center without having to drive unsafely. Those side images allowed the model to recover after accidentally drifting off center. The videos show a couple of cases where the car neared the edge of the road and then swerved back to center.
+
+Here are some camera images from the left, center, and right cameras:
+
+![Left image][left_image]
+![Center image][center_image]
+![Right image][right_image]
+
 
 #### 3. Model parameter tuning
 
@@ -108,7 +118,7 @@ The model used an adam optimizer, so not much tuning was needed outside of fitti
 
 I found that I needed to drive slowly and well-centered on the track to get good data, followed by adding additional data for areas (corners, typically, and the spot with parallel roads on the second track) that I found problems in with a model trained on the base data.
 
-For both models, I was able to learn to drive with data from only three loops around the track.
+For both tracks, I was able to learn to drive with data from only three loops around the track.
 
 
 ### Retrospective
