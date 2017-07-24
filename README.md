@@ -20,7 +20,7 @@ An example output image from the simulator is below:
 
 This project is an [implementation](https://github.com/gardenermike/behavioral-cloning/blob/master/model.py) using [Keras](https://keras.io/) and [TensorFlow](https://www.tensorflow.org/) to autonomously drive the simulator using the raw image data.
 
-Note that this implementation can be seen as a regression problem of images to steering angle. I experimented some with a recurrent layer in the network, but there was a strong tendency to overfit and just drive straight, so that is a project for another day.
+This implementation can be seen as a regression problem of images to steering angle. I experimented some with a recurrent layer in the network, but there was a strong tendency to overfit and just drive straight, so that is a project for another day.
 
 
 [//]: # (Image References)
@@ -52,8 +52,9 @@ The following files should be considered relevant
 * drive.py provides support to drive the car in autonomous mode, including the websocket server and generation of steering angles using the trained model. This file is mostly straight from Udacity's sample code, but I added a couple of features:
   - The simulator tends to lock up and quit accepting throttle commands. A quick "tap on the brake" fixes the problem, so my drive.py will push a small negative throttle value if the speed reported from the simulator drops below 0.5 mph.
   - I added support to run multiple models in parallel to get an ensemble value. I did not end up using the feature much, but it was interesting to experiment with, and could potentially be used to get smoother driving.
-* model.h5 contains the trained model and weights for the first track.
-* model-track2.h5 contains the trained model and weights for the second track
+  - For the second track, the [speed](https://github.com/gardenermike/behavioral-cloning/blob/master/drive.py#L48) should be set to 5 instead of 9 mph, as that corresponds better to my cautious driving on that track.
+* model.h5 contains the trained weights for the first track.
+* model-track2.h5 contains the trained weights for the second track
 * architecture.pdf contains a detailed (zoomable!) description of deeper the model I used successfully on both tracks
 
 To run a saved model, run:
