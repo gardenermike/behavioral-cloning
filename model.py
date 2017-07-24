@@ -37,8 +37,8 @@ features = []
 targets = []
 
 # the base directory of training data
-data_base_directory = '../track_2_2'
-#data_base_directory = '../car_training_2'
+#data_base_directory = '../track_2_2'
+data_base_directory = '../car_training_2'
 
 def local_image_path(image_path):
     filename = image_path.split('/')[-1]
@@ -102,7 +102,8 @@ def add_random_shear(image):
 
     pts1 = np.float32([[0, y_size], [x_size, y_size], [x_center, 0]])
 
-    rotation_angle = (np.random.random() * np.pi) - (np.pi / 2)
+    max_angle = np.pi / 4
+    rotation_angle = (np.random.random() * max_angle) - (max_angle / 2)
     delta_x = np.sin(rotation_angle) * y_size
     delta_y = np.cos(rotation_angle)
     pts2 = np.float32([[0, y_size], [x_size, y_size], [x_center + delta_x, delta_y]])
@@ -110,7 +111,7 @@ def add_random_shear(image):
     M = cv2.getAffineTransform(pts1, pts2)
     dst = cv2.warpAffine(image, M, (x_size, y_size))
 
-    return (rotation_angle / 2, dst)
+    return (rotation_angle, dst)
 
 # generator for training data
 def get_images(samples, batch_size=36, augment=True):
@@ -197,6 +198,8 @@ def preprocess(x):
     s_channel = tf.slice(hsv, [0, 0, 0, 1], [-1, -1, -1, 1])
     v_channel = tf.slice(hsv, [0, 0, 0, 2], [-1, -1, -1, 1])
 
+    return s_channel - 0.5
+
     false_matrix = tf.zeros_like(h_channel)
     true_matrix = tf.ones_like(h_channel)
 
@@ -252,7 +255,7 @@ inputs = Input(shape=(160, 320, 3))
 preprocessed = Lambda(preprocess, input_shape=(160, 320, 3))(inputs)
 y_crop_top_pixels = 100
 y_crop_bottom_pixels = 30
-x_crop_pixels = 90
+x_crop_pixels = 20
 cropped = Cropping2D(cropping=((y_crop_top_pixels, y_crop_bottom_pixels), (x_crop_pixels, x_crop_pixels)))(preprocessed)
 
 # this interesting function stretches the cropped image vertically.
@@ -308,9 +311,9 @@ conv5 = MaxPooling2D(pool_size=(1, 2), padding='same')(conv5)
 conv5 = Dropout(0.3)(conv5)
 
 conv6 = Conv2D(64, 3, padding='same', activation='elu')(conv5)
-for i in range(4):
-    conv6 = Conv2D(64, 3, padding='same', activation='elu')(conv6)
-    conv6 = Dropout(0.2)(conv6)
+#for i in range(4):
+#    conv6 = Conv2D(64, 3, padding='same', activation='elu')(conv6)
+#    conv6 = Dropout(0.2)(conv6)
 
 conv7 = SeparableConv2D(64, 1, padding='same')(conv6)
 conv7 = BatchNormalization()(conv7)
