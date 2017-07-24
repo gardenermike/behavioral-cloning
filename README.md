@@ -65,16 +65,16 @@ To run a saved model, run:
 
 #### 1.Model architecture
 
-I used a deep convolutional network. For a zoomable diagram of the deeper architecture I used successfully on both tracks, [check out the pdf](https://raw.githubusercontent.com/gardenermike/behavioral-cloning/master/architecture.pdf)
+I used a deep convolutional network. For a zoomable diagram of the deeper architecture I used successfully on both tracks, [check out the pdf](https://raw.githubusercontent.com/gardenermike/behavioral-cloning/master/architecture.pdf).
 
 The model could be considered loosely modeled on the LeNEt architecture, with additional layers added. With the idea that model depth represents abstraction, I opted for a deeper rather than wider model. I tinkered with the model quite a bit to balance performance and size, and to get solid performance that would generalize across both tracks.
 I used [elu](https://arxiv.org/abs/1511.07289) activation functions on each layer.
-I spent a number of iterations adjusting filter count in the convolutions, finding a quick-performing and reasonably small model that still learned successfully. The size of the first fully-connected layer turned out to be the biggest factor in the model size, which reminded me how much value convolutional layers provide with shared weights.
-I also experimented with max pooling. Max pooling lowered performance somewhat but dramatically sped up training by reducing the size of the model. The final architecture is careful with max pooling: it is applied three times, at carefully spaced intervals, and in addition, two of my max pooling layers pool only in the horizontal dimension, as the source images contain more vertical than horizontal information.
+I spent a number of iterations adjusting filter count in the convolutions, finding a quick-performing and reasonably small model that still learned successfully. The size of the first fully-connected layer turned out to be the biggest factor in the model size, which reminded me how much advantage convolutional layers provide by using shared weights.
+I also experimented with variations of max pooling. Max pooling lowered performance somewhat but dramatically sped up training by reducing the size of the model. The final architecture is careful with max pooling: it is applied three times, at carefully spaced intervals, and in addition, two of my max pooling layers pool only in the horizontal dimension, as the source images contain more crucial and limited vertical than horizontal information.
 
-One thing to note in the model note is the severe cropping: the vast majority of the image has been removed. In fact, I found that I could only successfully train the model with such severe cropping. In particular, any part of the image suggesting the _future_ was problematic. Since the autonomous driving process with the simulator works on a per-image basis with no state, each image needs to stand alone. I found that removing most of the upcoming view of the road ahead allowed the model to "live in the moment". The driving was a little choppier, but odd artifacts like a rock in front of a lane line would not confuse the model. On the second track, cropping much of the horizontal data (100 pixels on each side) works well, as the center dotted line is the best indicator of correct position.
+One thing to note in the model is the severe cropping: the vast majority of the image has been removed. In fact, I found that I could only successfully train the model with such severe cropping. In particular, any part of the image suggesting the _future_ was problematic. Since the autonomous driving process with the simulator works on a per-image basis with no state, each image needs to stand alone. I found that removing most of the upcoming view of the road ahead allowed the model to "live in the moment". The driving was a little choppier, but odd artifacts like a rock in front of a lane line would not confuse the model. On the second track, cropping much of the horizontal data (100 pixels on each side) works well, as the center dotted line is the best indicator of correct position.
 
-I experimented with color quite a bit. In the lambda preprocessing layer, I am currently converting the RGB passed in to the model, using Tensorflow, to HSV, then [dropping all but the S(aturation) layer](https://github.com/gardenermike/behavioral-cloning/blob/master/model.py#L202). I found the the S channel alone was not only sufficient but superior. I struggled with many iterations of the model to deal with the entrance to the dirt road on the first track. The S channel captured the boundary of the paved road best, allowing the model to see the corner properly.
+I experimented with color quite a bit. In the lambda preprocessing layer, I am currently using Tensorflow inside the model to convert RGB to HSV, then [dropping all but the S(aturation) layer](https://github.com/gardenermike/behavioral-cloning/blob/master/model.py#L202). I found the the S channel alone was not only sufficient but superior. I struggled with many iterations of the model to deal with the entrance to the dirt road on the first track. The S channel captured the boundary of the paved road best, allowing the model to see the corner properly.
 I performed grander experiments on the second track. I actually was able to drive most of the track with just one [carefully crafted channel](https://github.com/gardenermike/behavioral-cloning/blob/master/model-track2.py#L217).
 I made a gif from the perspective of the model using my custom channel:
 
@@ -123,9 +123,9 @@ The model used an adam optimizer, so not much tuning was needed outside of fitti
 
 #### 4. Appropriate training data
 
-I found that I needed to drive slowly and well-centered on the track to get good data, followed by adding additional data for areas (corners, typically, and the spot with parallel roads on the second track) that I found problems in with a model trained on the base data.
+I found that I needed to drive slowly and well-centered on the track to get good data, followed by adding additional data for areas (corners, typically, and the spot with parallel roads on the second track) that I found problems in with a model trained on the first pass of generated data.
 
-For both tracks, I was able to learn to drive with data from only three loops around the track, together with data augmentation described above.
+For both tracks, I was able to learn to drive with data from only three loops around the track (with extra at corners), together with data augmentation described above.
 
 
 ### Retrospective
